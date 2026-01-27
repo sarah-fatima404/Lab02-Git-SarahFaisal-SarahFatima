@@ -22,8 +22,7 @@ Loop2:
     bne x10, x22, Loop2 
 
 end:
-    j end 
-    
+    j end
 
 
 
