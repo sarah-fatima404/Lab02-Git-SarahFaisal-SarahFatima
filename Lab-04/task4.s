@@ -1,60 +1,67 @@
-    .text
-    .globl main
+.text
+.globl main
 
 main:
-    li x10, 0x100 # base address a[]
-    li x11, 4   #len=4     
 
-    li x20, 1
-    li x21, 2
-    li x22, 3
-    li x23, 4
+li x10, 0x100 #x[] base address
+li x11, 4 #len
 
-    sw x20, 0(x10) #a[0]= 1
-    sw x21, 4(x10) #a[1]= 2
-    sw x22, 8(x10) #a[2]= 3
-    sw x23, 12(x10) #a[3]= 4
+li x5, 3
+li x6, 4
+li x7, 5
+li x8, 1
 
-    jal x1, sum_array    
-    addi x12, x10, 0
-exit:
-    li x10, 10
-    ecall
+sw x5, 0(x10) #x[0]=3
+sw x6, 4(x10) #x[1]=4
+sw x7, 8(x10)#x[2]=5
+sw x8, 12(x10) #x[3]=1
 
-sum_array:
-    addi sp, sp, -16
-    sw x1, 12(sp) #return address
-    sw x10, 8(sp) #base address
-    sw x11, 4(sp) #length
-    sw x6, 0(sp) #sum register
+insertion_sort:
+    # base case
+    li   x5, 1
+    ble  x11, x5, done #if n<=1, return
 
-    addi x6, x0, 0 #sum=0
-    addi x5, x0, 0 #i=0
+    #stack frame
+    addi x2, x2, -16
+    sw   x1, 12(x2)
+    sw   x10, 8(x2)
+    sw   x11, 4(x2)
 
-sum_loop:
-    bge x5, x11, sum_done
+    # recursive call: insertion_sort(arr, n-1)
+    addi x11, x11, -1
+    jal  x1, insertion_sort
 
-    slli x7, x5, 2  #i*4
-    add x7, x7, x10
-    lw x7, 0(x7)     #arr[i]
+    # restore registers
+    lw   x11, 4(x2)
+    lw   x10, 8(x2)
+    lw   x1, 12(x2)
+    addi x2, x2, 16
 
-    addi x10, x6, 0 #x10=sum
-    addi x11, x7, 0 #x11=arr[i]
-    jal x1, add_func  
+    addi x6, x11, -1  #key = arr[n-1]
+    slli x6, x6, 2
+    add  x6, x10, x6
+    lw   x7, 0(x6)  #key
 
-    addi x6, x10, 0  
-    addi x5, x5, 1 #i++
-    j sum_loop
+    addi x28, x11, -2 #j=n-2
 
-sum_done:
-    addi x10, x6, 0     
+insert_loop:
+    blt  x28, x0, insert_key #if j<0, insert
 
-    lw x6, 0(sp)
-    lw x1, 12(sp)
-    addi sp, sp, 16
-    jalr x0, x1, 0
+    slli x29, x28, 2
+    add  x29, x10, x29
+    lw   x30, 0(x29)      #arr[j]
 
+    ble  x30, x7, insert_key #if arr[j]<=key, insert
 
-add_func:
-    add x10, x10, x11
-    jalr x0, x1, 0
+    sw   x30, 4(x29)      # arr[j+1] = arr[j]
+    addi x28, x28, -1
+    j    insert_loop
+
+insert_key:  
+    addi x28, x28, 1
+    slli x29, x28, 2
+    add  x29, x10, x29
+    sw   x7, 0(x29)       # arr[j+1] = key
+
+done:
+    ret
